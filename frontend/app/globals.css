@@ -29,7 +29,7 @@ button {
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto auto auto auto;
+  grid-template-columns: minmax(180px, 1fr) auto auto auto auto auto;
   align-items: center;
   gap: 8px;
   border: 1px solid #24303c;
@@ -84,6 +84,16 @@ button {
   color: #f1fbff;
 }
 
+.modeSelect {
+  height: 36px;
+  min-width: 104px;
+  border: 1px solid #2d3d4d;
+  border-radius: 6px;
+  background: #101821;
+  color: #c9d5df;
+  padding: 0 8px;
+}
+
 .iconButton {
   display: grid;
   width: 36px;
@@ -120,14 +130,23 @@ button {
 
 .marketGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 340px);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px) minmax(230px, 270px);
   gap: 10px;
   min-height: 0;
   flex: 1;
 }
 
+.leftStack {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 10px;
+  min-width: 0;
+}
+
 .chartSurface,
-.tape {
+.tape,
+.domPanel,
+.footprintPanel {
   min-height: 0;
   border: 1px solid #24303c;
   border-radius: 8px;
@@ -180,6 +199,193 @@ button {
   display: block;
 }
 
+.vwapLine {
+  stroke: #00bfa6;
+  stroke-dasharray: 4 4;
+  stroke-width: 1;
+}
+
+.bubble {
+  opacity: 0.32;
+}
+
+.buyBubble {
+  fill: #1b9cdc;
+}
+
+.sellBubble {
+  fill: #e94d5f;
+}
+
+.bubbleText {
+  fill: #eaf5ff;
+  font-size: 13px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.profileBuy {
+  fill: #2374db;
+  opacity: 0.55;
+}
+
+.profileSell {
+  fill: #e63c45;
+  opacity: 0.58;
+}
+
+.profilePoc {
+  fill: #ff3737;
+  opacity: 0.75;
+}
+
+.speedTape {
+  height: 150px;
+  border-top: 1px solid #202b36;
+  background: #070b10;
+  padding: 8px 12px 10px;
+}
+
+.indicatorLabel {
+  color: #8c9cac;
+  font-size: 12px;
+}
+
+.speedBars {
+  display: flex;
+  align-items: center;
+  height: 104px;
+  gap: 1px;
+  overflow: hidden;
+}
+
+.speedBar {
+  display: block;
+  width: 3px;
+  align-self: center;
+}
+
+.buySpeed {
+  background: #277bd6;
+}
+
+.sellSpeed {
+  background: #c01924;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 34px;
+  border-bottom: 1px solid #202b36;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.panelTitle span {
+  color: #1de0a2;
+}
+
+.panelTitle button {
+  margin-left: 4px;
+  border: 1px solid #2d4861;
+  border-radius: 4px;
+  background: #0c1722;
+  color: #d7e8ff;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.domPanel {
+  overflow: hidden;
+}
+
+.hiddenPanel {
+  min-width: 90px;
+}
+
+.domRows {
+  height: calc(100vh - 112px);
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.domRow {
+  display: grid;
+  grid-template-columns: 70px 58px 58px 74px 58px 58px;
+  min-height: 20px;
+  align-items: center;
+  border-bottom: 1px solid #14202a;
+}
+
+.domHead {
+  color: #d6e2ef;
+  background: linear-gradient(#5a6773, #17202a);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.domRow > span,
+.domRow > strong {
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  padding: 2px 5px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.domRow > strong {
+  background: #172638;
+  color: #f0f7ff;
+  text-align: center;
+}
+
+.domRow > span::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--w, 0%);
+  content: "";
+  opacity: 0.45;
+}
+
+.bidQty {
+  color: #2b91ff;
+}
+
+.bidQty::before,
+.buyPrint::before {
+  background: #1977d3;
+}
+
+.askQty {
+  color: #ff4949;
+}
+
+.askQty::before,
+.sellPrint::before {
+  background: #cf2f34;
+}
+
+.buyPrint {
+  color: #46a2ff;
+}
+
+.sellPrint {
+  color: #ff4d4d;
+}
+
+.domProfile.buy::before {
+  background: #2174d8;
+}
+
+.domProfile.sell::before {
+  background: #c83335;
+}
+
 .plotBg {
   fill: #070b10;
 }
@@ -219,7 +425,46 @@ button {
 
 .tapeRows {
   overflow: hidden;
+  max-height: calc(100vh - 112px);
   font-variant-numeric: tabular-nums;
+}
+
+.footprintPanel {
+  overflow: hidden;
+  min-height: 190px;
+}
+
+.footprints {
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+  padding: 8px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+}
+
+.footprintCandle {
+  min-width: 118px;
+  border-left: 1px solid #1c2a36;
+  border-right: 1px solid #1c2a36;
+}
+
+.footprintTime {
+  color: #8c9cac;
+  font-size: 11px;
+  text-align: center;
+}
+
+.footprintLevel {
+  display: grid;
+  grid-template-columns: 1fr 46px 1fr;
+  gap: 4px;
+  padding: 1px 4px;
+  font-size: 11px;
+}
+
+.footprintLevel strong {
+  color: #e6f1fb;
+  text-align: center;
 }
 
 .tapeRow {

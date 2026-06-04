@@ -3,10 +3,12 @@ import { Pause, Play, RefreshCw, Wifi, WifiOff } from "lucide-react";
 type ToolbarProps = {
   symbol: string;
   timeframeSec: number;
+  chartMode: string;
   live: boolean;
   connected: boolean;
   lastPrice: number | null;
   onTimeframeChange: (timeframeSec: number) => void;
+  onChartModeChange: (mode: string) => void;
   onLiveToggle: () => void;
   onRefresh: () => void;
 };
@@ -16,13 +18,17 @@ const intervals = [
   { label: "5m", value: 300 },
 ];
 
+const chartModes = ["Time", "Tick", "Volume", "Dollar", "Range", "Footprint"];
+
 export function Toolbar({
   symbol,
   timeframeSec,
+  chartMode,
   live,
   connected,
   lastPrice,
   onTimeframeChange,
+  onChartModeChange,
   onLiveToggle,
   onRefresh,
 }: ToolbarProps) {
@@ -44,6 +50,11 @@ export function Toolbar({
           </button>
         ))}
       </div>
+      <select className="modeSelect" value={chartMode} onChange={(event) => onChartModeChange(event.target.value)} aria-label="Chart mode">
+        {chartModes.map((mode) => (
+          <option key={mode} value={mode}>{mode}</option>
+        ))}
+      </select>
       <button className="iconButton" onClick={onLiveToggle} title={live ? "Pause live updates" : "Resume live updates"} type="button">
         {live ? <Pause size={17} /> : <Play size={17} />}
       </button>

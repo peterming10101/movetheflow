@@ -7,6 +7,7 @@ from .api.candles import router as candles_router
 from .api.diagnostics import router as diagnostics_router
 from .api.metrics import router as metrics_router
 from .api.trades import router as trades_router
+from .api.workspace import router as workspace_router
 from .config import get_settings
 from .depth.depth_manager import DepthManager
 from .derived.time_candle_engine import time_candle_engine
@@ -114,6 +115,7 @@ app.include_router(diagnostics_router)
 app.include_router(metrics_router)
 app.include_router(candles_router)
 app.include_router(trades_router)
+app.include_router(workspace_router)
 
 
 @app.get("/health")

@@ -1,10 +1,15 @@
-import type { TimeCandle } from "../lib/types";
+import type { MarketOrderBubble, ProfileRow, SpeedTapeBar, TimeCandle, VwapState } from "../lib/types";
 
 type MainChartProps = {
   candles: TimeCandle[];
+  profile: ProfileRow[];
+  bubbles: MarketOrderBubble[];
+  speedTape: SpeedTapeBar[];
+  vwap: VwapState;
+  mode: string;
 };
 
-export function MainChart({ candles }: MainChartProps) {
+export function MainChart({ candles, profile, bubbles, speedTape, vwap, mode }: MainChartProps) {
   const visible = candles.slice(-90);
   const bounds = getBounds(visible);
   const width = 1000;
@@ -20,13 +25,14 @@ export function MainChart({ candles }: MainChartProps) {
       <div className="chartHeader">
         <div>
           <h2>Main Chart</h2>
-          <span>{visible.length ? `${visible.length} live-buffer candles` : "Waiting for live candles"}</span>
+          <span>{mode} / {visible.length ? `${visible.length} live-buffer candles` : "Waiting for live candles"}</span>
         </div>
         <div className="chartStats">
           <span>O {formatPrice(visible.at(-1)?.open)}</span>
           <span>H {formatPrice(visible.at(-1)?.high)}</span>
           <span>L {formatPrice(visible.at(-1)?.low)}</span>
           <span>C {formatPrice(visible.at(-1)?.close)}</span>
+          <span>VWAP {formatPrice(vwap.vwap ?? undefined)}</span>
         </div>
       </div>
       <svg className="candles" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Live BTCUSDT candlestick chart">
@@ -57,6 +63,23 @@ export function MainChart({ candles }: MainChartProps) {
             </g>
           );
         })}
+        {vwap.vwap ? <line className="vwapLine" x1="0" x2={width} y1={scale(vwap.vwap, bounds.min, bounds.max, padTop, chartHeight)} y2={scale(vwap.vwap, bounds.min, bounds.max, padTop, chartHeight)} /> : null}
+        {bubbles.map((bubble) => {
+          const index = visible.findIndex((candle) => candle.openTime === bubble.candleOpenTime);
+          if (index === -1) return null;
+          const x = index * slot + slot / 2;
+          const y = scale(bubble.price, bounds.min, bounds.max, padTop, chartHeight);
+          const radius = Math.max(10, Math.min(38, Math.sqrt(bubble.notional) / 32));
+          return (
+            <g key={`${bubble.candleOpenTime}-${bubble.side}-${bubble.label}`}>
+              <circle className={bubble.side === "buy" ? "bubble buyBubble" : "bubble sellBubble"} cx={x} cy={y} r={radius} />
+              <text className="bubbleText" x={x} y={y + 4}>
+                {bubble.label}
+              </text>
+            </g>
+          );
+        })}
+        <ProfileOverlay profile={profile} min={bounds.min} max={bounds.max} padTop={padTop} chartHeight={chartHeight} width={width} />
         <text className="axisLabel" x={width - 92} y={padTop + 14}>
           {formatPrice(bounds.max)}
         </text>
@@ -64,7 +87,56 @@ export function MainChart({ candles }: MainChartProps) {
           {formatPrice(bounds.min)}
         </text>
       </svg>
+      <SpeedTape bars={speedTape} />
     </section>
+  );
+}
+
+function ProfileOverlay({
+  profile,
+  min,
+  max,
+  padTop,
+  chartHeight,
+  width,
+}: {
+  profile: ProfileRow[];
+  min: number;
+  max: number;
+  padTop: number;
+  chartHeight: number;
+  width: number;
+}) {
+  const visibleRows = profile.filter((row) => row.price >= min && row.price <= max);
+  const maxVolume = Math.max(1, ...visibleRows.map((row) => row.volume));
+  return (
+    <g>
+      {visibleRows.map((row) => {
+        const y = scale(row.price, min, max, padTop, chartHeight);
+        const barWidth = (row.volume / maxVolume) * 120;
+        return (
+          <g key={row.price}>
+            <rect className={row.delta >= 0 ? "profileBuy" : "profileSell"} x={width - barWidth - 14} y={y - 2} width={barWidth} height={4} />
+            {row.isPoc ? <rect className="profilePoc" x={width - barWidth - 14} y={y - 3} width={barWidth} height={6} /> : null}
+          </g>
+        );
+      })}
+    </g>
+  );
+}
+
+function SpeedTape({ bars }: { bars: SpeedTapeBar[] }) {
+  const max = Math.max(1, ...bars.map((bar) => Math.abs(bar.value)));
+  return (
+    <div className="speedTape">
+      <div className="indicatorLabel">Speed Tape</div>
+      <div className="speedBars">
+        {bars.slice(-120).map((bar) => {
+          const height = Math.max(2, (Math.abs(bar.value) / max) * 70);
+          return <span className={bar.value >= 0 ? "speedBar buySpeed" : "speedBar sellSpeed"} key={bar.time} style={{ height }} />;
+        })}
+      </div>
+    </div>
   );
 }
 

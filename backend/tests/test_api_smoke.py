@@ -13,6 +13,7 @@ def test_health_and_metrics_endpoint_with_live_disabled() -> None:
         recorder = client.get("/api/recorder/status")
         candles = client.get("/api/candles/time?timeframe=60&limit=10")
         trades = client.get("/api/trades/recent?limit=10")
+        workspace = client.get("/api/workspace?timeframe=60&limit=20")
     assert health.status_code == 200
     assert health.json()["status"] == "ok"
     assert metrics.status_code == 200
@@ -23,3 +24,6 @@ def test_health_and_metrics_endpoint_with_live_disabled() -> None:
     assert candles.json()["coverage"]["sourceQuality"] == "live_only"
     assert trades.status_code == 200
     assert trades.json() == []
+    assert workspace.status_code == 200
+    assert "dom" in workspace.json()
+    assert "speedTape" in workspace.json()

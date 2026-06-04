@@ -118,3 +118,70 @@ class CoverageMetadata(BaseModel):
 class CandleSnapshot(BaseModel):
     data: list[TimeCandle]
     coverage: CoverageMetadata
+
+
+class ProfileRow(BaseModel):
+    price: float
+    volume: float = 0.0
+    buyVolume: float = 0.0
+    sellVolume: float = 0.0
+    delta: float = 0.0
+    isPoc: bool = False
+
+
+class DomRow(BaseModel):
+    price: float
+    bid: float = 0.0
+    ask: float = 0.0
+    buyPrint: float = 0.0
+    sellPrint: float = 0.0
+    profileVolume: float = 0.0
+    delta: float = 0.0
+
+
+class MarketOrderBubble(BaseModel):
+    candleOpenTime: int
+    price: float
+    side: AggressorSide
+    quantity: float
+    notional: float
+    label: str
+
+
+class SpeedTapeBar(BaseModel):
+    time: int
+    value: float
+    buyVolume: float
+    sellVolume: float
+
+
+class FootprintLevel(BaseModel):
+    price: float
+    bidVolume: float = 0.0
+    askVolume: float = 0.0
+    delta: float = 0.0
+
+
+class FootprintCandle(BaseModel):
+    openTime: int
+    closeTime: int
+    levels: list[FootprintLevel] = Field(default_factory=list)
+
+
+class VwapState(BaseModel):
+    vwap: float | None = None
+    upperBand: float | None = None
+    lowerBand: float | None = None
+
+
+class WorkspaceSnapshot(BaseModel):
+    candles: list[TimeCandle]
+    trades: list[NormalizedTrade]
+    dom: list[DomRow]
+    profile: list[ProfileRow]
+    bubbles: list[MarketOrderBubble]
+    speedTape: list[SpeedTapeBar]
+    footprints: list[FootprintCandle]
+    vwap: VwapState
+    coverage: CoverageMetadata
+    depth: OrderBookState | None = None

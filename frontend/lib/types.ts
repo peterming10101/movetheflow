@@ -49,6 +49,73 @@ export type CandleSnapshot = {
   coverage: CoverageMetadata;
 };
 
+export type ProfileRow = {
+  price: number;
+  volume: number;
+  buyVolume: number;
+  sellVolume: number;
+  delta: number;
+  isPoc: boolean;
+};
+
+export type DomRow = {
+  price: number;
+  bid: number;
+  ask: number;
+  buyPrint: number;
+  sellPrint: number;
+  profileVolume: number;
+  delta: number;
+};
+
+export type MarketOrderBubble = {
+  candleOpenTime: number;
+  price: number;
+  side: AggressorSide;
+  quantity: number;
+  notional: number;
+  label: string;
+};
+
+export type SpeedTapeBar = {
+  time: number;
+  value: number;
+  buyVolume: number;
+  sellVolume: number;
+};
+
+export type FootprintLevel = {
+  price: number;
+  bidVolume: number;
+  askVolume: number;
+  delta: number;
+};
+
+export type FootprintCandle = {
+  openTime: number;
+  closeTime: number;
+  levels: FootprintLevel[];
+};
+
+export type VwapState = {
+  vwap: number | null;
+  upperBand: number | null;
+  lowerBand: number | null;
+};
+
+export type WorkspaceSnapshot = {
+  candles: TimeCandle[];
+  trades: Trade[];
+  dom: DomRow[];
+  profile: ProfileRow[];
+  bubbles: MarketOrderBubble[];
+  speedTape: SpeedTapeBar[];
+  footprints: FootprintCandle[];
+  vwap: VwapState;
+  coverage: CoverageMetadata;
+  depth: unknown;
+};
+
 export type DiagnosticSnapshot = {
   symbol: string;
   liveTradeCount: number;

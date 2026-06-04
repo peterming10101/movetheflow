@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { MainChart } from "../components/MainChart";
 import { TimeAndSales } from "../components/TimeAndSales";
 import { Toolbar } from "../components/Toolbar";
+import { DomPanel } from "../components/DomPanel";
+import { FootprintPanel } from "../components/FootprintPanel";
 import {
   connectCandleStream,
   connectTradeStream,
@@ -11,27 +13,34 @@ import {
   getMarketMetrics,
   getRecentTrades,
   getTimeCandles,
+  getWorkspace,
 } from "../lib/api";
-import type { DiagnosticSnapshot, Metrics, TimeCandle, Trade } from "../lib/types";
+import type { DiagnosticSnapshot, Metrics, TimeCandle, Trade, WorkspaceSnapshot } from "../lib/types";
 
 export default function Page() {
   const [timeframeSec, setTimeframeSec] = useState(60);
+  const [chartMode, setChartMode] = useState("Time");
   const [live, setLive] = useState(true);
+  const [domHidden, setDomHidden] = useState(false);
+  const [clearedPrintsAt, setClearedPrintsAt] = useState(0);
   const [connected, setConnected] = useState(false);
   const [candles, setCandles] = useState<TimeCandle[]>([]);
   const [trades, setTrades] = useState<Trade[]>([]);
+  const [workspace, setWorkspace] = useState<WorkspaceSnapshot | null>(null);
   const [diagnostics, setDiagnostics] = useState<DiagnosticSnapshot | null>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refreshSnapshots = useCallback(async () => {
     try {
-      const [nextCandles, nextTrades, nextDiagnostics, nextMetrics] = await Promise.all([
+      const [nextWorkspace, nextCandles, nextTrades, nextDiagnostics, nextMetrics] = await Promise.all([
+        getWorkspace(timeframeSec),
         getTimeCandles(timeframeSec),
         getRecentTrades(),
         getDiagnostics(),
         getMarketMetrics(),
       ]);
+      setWorkspace(nextWorkspace);
       setCandles(nextCandles.data);
       setTrades(nextTrades);
       setDiagnostics(nextDiagnostics);
@@ -48,9 +57,10 @@ export default function Page() {
     refreshSnapshots();
     const timer = window.setInterval(async () => {
       try {
-        const [nextDiagnostics, nextMetrics] = await Promise.all([getDiagnostics(), getMarketMetrics()]);
+        const [nextDiagnostics, nextMetrics, nextWorkspace] = await Promise.all([getDiagnostics(), getMarketMetrics(), getWorkspace(timeframeSec)]);
         setDiagnostics(nextDiagnostics);
         setMetrics(nextMetrics);
+        setWorkspace(nextWorkspace);
         window.__marketDataMetrics = { snapshot: () => nextMetrics };
       } catch {
         setConnected(false);
@@ -96,17 +106,35 @@ export default function Page() {
       <Toolbar
         symbol={diagnostics?.symbol ?? "BTCUSDT"}
         timeframeSec={timeframeSec}
+        chartMode={chartMode}
         live={live}
         connected={connected}
         lastPrice={latestTrade?.price ?? null}
         onTimeframeChange={setTimeframeSec}
+        onChartModeChange={setChartMode}
         onLiveToggle={() => setLive((value) => !value)}
         onRefresh={refreshSnapshots}
       />
       {error ? <div className="warning">{error}</div> : null}
       <section className="marketGrid">
-        <MainChart candles={candles} />
-        <TimeAndSales trades={trades} paused={!live} />
+        <div className="leftStack">
+          <MainChart
+            candles={workspace?.candles.length ? workspace.candles : candles}
+            profile={workspace?.profile ?? []}
+            bubbles={workspace?.bubbles ?? []}
+            speedTape={workspace?.speedTape ?? []}
+            vwap={workspace?.vwap ?? { vwap: null, upperBand: null, lowerBand: null }}
+            mode={chartMode}
+          />
+          {chartMode === "Footprint" ? <FootprintPanel footprints={workspace?.footprints ?? []} /> : null}
+        </div>
+        <DomPanel
+          rows={clearedPrintsAt ? (workspace?.dom ?? []).map((row) => ({ ...row, buyPrint: 0, sellPrint: 0 })) : workspace?.dom ?? []}
+          onClear={() => setClearedPrintsAt(Date.now())}
+          hidden={domHidden}
+          onHideToggle={() => setDomHidden((value) => !value)}
+        />
+        <TimeAndSales trades={workspace?.trades.length ? workspace.trades.slice(0, 120) : trades} paused={!live} />
       </section>
       <section className="statusStrip">
         {statusCards.map((card) => (

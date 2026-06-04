@@ -131,3 +131,54 @@ Known Phase 2 limits:
 - SQLite-backed candle history is deferred to the next backend hardening task.
 - The chart renderer is a lightweight SVG candlestick renderer, not yet
   `lightweight-charts`.
+
+## Full Surface Build
+
+The platform no longer follows the original phase gates. The current build adds
+a broad live workspace modeled on the provided reference image:
+
+- Backend `/api/workspace` snapshot with candles, recent trades, DOM rows,
+  trade-derived profile/delta profile, market-order bubbles, Speed Tape,
+  time-footprint levels, VWAP, coverage metadata, and latest depth.
+- Frontend chart/profile/speed stack, right-side DOM ladder, far-right Time and
+  Sales tape, toolbar chart modes, and optional footprint panel.
+- DOM bid/ask state is derived from backend depth only.
+- Executed buy/sell prints, profile, speed tape, bubbles, VWAP, and footprint
+  data are derived from canonical normalized trades.
+- Frontend still has no direct Binance connectivity.
+
+Validation evidence on 2026-06-04:
+
+```powershell
+cd backend
+python -m pytest -q
+# 13 passed
+
+cd frontend
+npm run build
+# production build completed successfully
+```
+
+Live validation ran with backend on `127.0.0.1:8006` and frontend on
+`127.0.0.1:3003`.
+
+- `/api/workspace` returned `2` candles, `200` trades, `111` DOM rows, `9`
+  profile rows, `2` bubbles, `17` speed-tape bars, `1` footprint candle, and
+  VWAP bands.
+- Depth status was `synced`.
+- `trade_ws_messages_received`: `6851`.
+- `trade_messages_normalized`: `6838`.
+- `trade_messages_rejected`: `13`.
+- `candle_updates_published`: `13676`.
+- Browser validation showed `BTCUSDT`, `DOM`, `Time and Sales`, `Main Chart`,
+  `Speed Tape`, and the `Footprint` option.
+- Browser console errors: none.
+
+Known full-surface limits:
+
+- Generated Tick/Volume/Dollar/Range chart modes are present in the toolbar but
+  still render the live time-candle stream until dedicated generated engines are
+  wired.
+- DOM clear is currently frontend-local for the visible executed-print columns.
+- Profile/session coverage remains `live_only` until persisted session backfill
+  and 08:00 UTC+8 coverage auditing are added.
