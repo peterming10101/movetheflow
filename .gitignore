@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+
+# Node / Next
+node_modules/
+.next/
+out/
+
+# Local runtime artifacts
+*.log
+backend/data/
+phase1-diagnostics.png
+
+# OS/editor
+.DS_Store
+Thumbs.db
