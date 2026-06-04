@@ -1,8 +1,8 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Movetheflow Diagnostics",
-  description: "Phase 1 market-data diagnostics",
+  title: "Movetheflow Platform",
+  description: "Live BTCUSDT orderflow workspace",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

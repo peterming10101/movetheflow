@@ -39,6 +39,9 @@ class TradeBus:
     def latest(self) -> NormalizedTrade | None:
         return self._live_buffer[-1] if self._live_buffer else None
 
+    def recent(self, limit: int = 100) -> list[NormalizedTrade]:
+        return list(self._live_buffer)[-limit:][::-1]
+
     def live_count(self) -> int:
         return len(self._live_buffer)
 

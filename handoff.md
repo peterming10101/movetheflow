@@ -67,3 +67,67 @@ Frontend browser validation:
 - Page showed `BTCUSDT`, `Synced`, `Latest Trade`, and `Recorder`.
 - Browser console errors: none.
 - Screenshot artifact: `C:\Users\Riley\Documents\Movetheflow\phase1-diagnostics.png`.
+
+## Phase 2 Architecture
+
+Phase 2 adds the first chart-and-tape workspace while preserving Phase 1 data
+ownership:
+
+- `TimeCandleEngine` derives live time candles from canonical `TradeBus` trades.
+- `GET /api/candles/time` returns the live-buffer candle snapshot with explicit
+  `live_only` coverage.
+- `GET /api/trades/recent` returns newest-first normalized trades from the
+  backend live buffer.
+- `WS /api/ws/candles/time` streams backend-derived live candle updates.
+- `WS /api/ws/trades` streams canonical normalized trades for Time and Sales.
+- The frontend consumes only backend `/api` and `/api/ws` endpoints.
+
+Phase 2 intentionally does not add DOM, profiles, indicators, generated candles,
+execution, alerts, or direct exchange access from the browser.
+
+## Phase 2 Validation Evidence
+
+Automated checks on 2026-06-04:
+
+```powershell
+cd backend
+python -m pytest -q
+# 13 passed
+
+cd frontend
+npm run build
+# production build completed successfully
+```
+
+Live BTCUSDT validation was run with backend on `127.0.0.1:8005` and frontend on
+`127.0.0.1:3002`.
+
+- `GET /api/candles/time?timeframe=60&limit=5` returned live candles.
+- Latest candle had sane price bounds: low `63103.7`, high `63174.1`.
+- `GET /api/trades/recent?limit=5` returned newest-first normalized trades.
+- `trade_ws_messages_received`: `5368`.
+- `trade_messages_normalized`: `5366`.
+- `trade_messages_rejected`: `2` non-positive trade payloads rejected.
+- `candle_updates_published`: `10732`.
+- `depth_status`: `synced`.
+- `recorder_queue_size`: `1`.
+
+Browser validation at `http://127.0.0.1:3002` showed:
+
+- `BTCUSDT`
+- `Main Chart`
+- `Time and Sales`
+- `Live`
+- `Candles`
+- Browser console errors: none.
+
+Local dev CORS now permits `localhost` and `127.0.0.1` on arbitrary ports via
+regex so validation can use throwaway frontend ports without editing backend
+config.
+
+Known Phase 2 limits:
+
+- Candle history is live-buffer only and labelled `live_only`.
+- SQLite-backed candle history is deferred to the next backend hardening task.
+- The chart renderer is a lightweight SVG candlestick renderer, not yet
+  `lightweight-charts`.

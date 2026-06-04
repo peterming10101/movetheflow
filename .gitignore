@@ -13,6 +13,7 @@ out/
 *.log
 backend/data/
 phase1-diagnostics.png
+*.zip
 
 # OS/editor
 .DS_Store

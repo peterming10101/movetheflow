@@ -57,12 +57,14 @@ class MarketDataMetrics(BaseModel):
     trade_ws_messages_received: int = 0
     trade_messages_normalized: int = 0
     trade_messages_deduped: int = 0
+    trade_messages_rejected: int = 0
     trade_messages_persisted: int = 0
     trade_bus_publications: int = 0
     depth_ws_messages_received: int = 0
     depth_updates_applied: int = 0
     depth_resync_count: int = 0
     depth_status: str = "stopped"
+    candle_updates_published: int = 0
     recorder_queue_size: int = 0
     recorder_flush_latency_ms: float = 0.0
 
@@ -82,3 +84,37 @@ class DiagnosticSnapshot(BaseModel):
     bestAsk: float | None
     depthSynced: bool
     depthLastUpdateId: int | None
+
+
+class TimeCandle(BaseModel):
+    symbol: str
+    venue: str
+    timeframeSec: int
+    openTime: int
+    closeTime: int
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: float
+    notional: float
+    buyVolume: float = 0.0
+    sellVolume: float = 0.0
+    delta: float = 0.0
+    tradeCount: int = 0
+    isLive: bool = True
+
+
+class CoverageMetadata(BaseModel):
+    requestedStart: int | None = None
+    requestedEnd: int | None = None
+    availableStart: int | None = None
+    availableEnd: int | None = None
+    missingRanges: list[tuple[int, int]] = Field(default_factory=list)
+    sourceQuality: SourceQuality = SourceQuality.live_only
+    source: str = "live_buffer"
+
+
+class CandleSnapshot(BaseModel):
+    data: list[TimeCandle]
+    coverage: CoverageMetadata

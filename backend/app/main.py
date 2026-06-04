@@ -3,10 +3,13 @@ import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from .api.candles import router as candles_router
 from .api.diagnostics import router as diagnostics_router
 from .api.metrics import router as metrics_router
+from .api.trades import router as trades_router
 from .config import get_settings
 from .depth.depth_manager import DepthManager
+from .derived.time_candle_engine import time_candle_engine
 from .exchanges.binance_futures.normalizers import normalize_aggregate_trade
 from .exchanges.binance_futures.rest import BinanceFuturesRestClient
 from .exchanges.binance_futures.websocket import BinanceWebSocketFeed
@@ -38,7 +41,11 @@ async def lifespan(app: FastAPI):
 
     async def trade_handler(payload: dict) -> None:
         metrics.increment("trade_ws_messages_received")
-        trade = normalize_aggregate_trade(payload, settings.venue, settings.symbol)
+        try:
+            trade = normalize_aggregate_trade(payload, settings.venue, settings.symbol)
+        except ValueError:
+            metrics.increment("trade_messages_rejected")
+            return
         metrics.increment("trade_messages_normalized")
         published = await trade_bus.publish(trade)
         if published:
@@ -73,9 +80,19 @@ async def lifespan(app: FastAPI):
                 metrics.set("depth_status", "snapshot_retry")
                 await asyncio.sleep(1)
 
+    async def run_time_candles() -> None:
+        queue = await trade_bus.subscribe()
+        try:
+            while not stop.is_set():
+                trade = await queue.get()
+                await time_candle_engine.on_trade(trade)
+        finally:
+            await trade_bus.unsubscribe(queue)
+
     tasks.append(asyncio.create_task(recorder.run(stop)))
     tasks.append(asyncio.create_task(feed.consume(f"{settings.symbol.lower()}@trade", trade_handler, stop)))
     tasks.append(asyncio.create_task(start_depth()))
+    tasks.append(asyncio.create_task(run_time_candles()))
     try:
         yield
     finally:
@@ -88,13 +105,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Movetheflow Market Data", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.include_router(diagnostics_router)
 app.include_router(metrics_router)
+app.include_router(candles_router)
+app.include_router(trades_router)
 
 
 @app.get("/health")

@@ -38,6 +38,15 @@ def test_binance_raw_trade_payload_uses_trade_id() -> None:
     assert trade.sourceCursor == "99"
 
 
+def test_non_positive_trade_price_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        normalize_aggregate_trade(
+            {"t": 100, "E": 1000, "T": 900, "p": "0", "q": "0.100", "m": True},
+            venue="binance_usdm",
+            symbol="BTCUSDT",
+        )
+
+
 @pytest.mark.asyncio
 async def test_trade_bus_dedupes_by_canonical_key() -> None:
     bus = TradeBus()

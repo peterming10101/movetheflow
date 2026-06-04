@@ -12,6 +12,12 @@ def normalize_aggregate_trade(payload: dict[str, Any], venue: str, symbol: str) 
     is_buyer_maker = bool(payload["m"])
     quantity = float(payload["q"])
     price = float(payload["p"])
+    if trade_id is None:
+        raise ValueError("Binance trade payload is missing a trade id")
+    if price <= 0:
+        raise ValueError("Binance trade payload has non-positive price")
+    if quantity <= 0:
+        raise ValueError("Binance trade payload has non-positive quantity")
     return NormalizedTrade(
         symbol=symbol.upper(),
         venue=venue,
