@@ -1,5 +1,7 @@
 from collections import defaultdict
+import os
 from statistics import pstdev
+import httpx
 from ..market_data.depth_bus import depth_bus
 from ..market_data.trade_bus import trade_bus
 from ..derived.time_candle_engine import time_candle_engine
@@ -14,6 +16,7 @@ from ..schemas import (
     SpeedTapeBar,
     VwapState,
     WorkspaceSnapshot,
+    TimeCandle,
 )
 
 
@@ -23,31 +26,91 @@ def bucket_price(price: float, step: float) -> float:
 
 async def build_workspace_snapshot(timeframe_sec: int = 60, limit: int = 240, price_step: float = 5.0) -> WorkspaceSnapshot:
     candle_snapshot = await time_candle_engine.snapshot(timeframe_sec, limit)
+    candles = await load_time_candle_history(timeframe_sec, limit)
+    if candle_snapshot.data:
+        live_by_time = {candle.openTime: candle for candle in candle_snapshot.data}
+        merged = [live_by_time.get(candle.openTime, candle) for candle in candles]
+        known = {candle.openTime for candle in merged}
+        merged.extend(candle for candle in candle_snapshot.data if candle.openTime not in known)
+        candles = sorted(merged, key=lambda candle: candle.openTime)[-limit:]
     trades = trade_bus.recent(2000)
     newest_trades = trades[:200]
     depth = depth_bus.latest()
-    profile = build_profile(trades, price_step)
+    profile = build_profile(trades, price_step, candles)
     return WorkspaceSnapshot(
-        candles=candle_snapshot.data,
+        candles=candles,
         trades=newest_trades,
         dom=build_dom(depth, trades, profile, price_step),
         profile=profile,
         bubbles=build_market_order_bubbles(trades, timeframe_sec),
-        speedTape=build_speed_tape(trades),
+        speedTape=build_speed_tape(trades, candles),
         footprints=build_footprints(trades, timeframe_sec, price_step),
         vwap=build_vwap(trades),
         coverage=CoverageMetadata(
             availableStart=candle_snapshot.coverage.availableStart,
-            availableEnd=candle_snapshot.coverage.availableEnd,
-            sourceQuality="live_only",
-            source="live_buffer",
+            availableEnd=candles[-1].closeTime if candles else candle_snapshot.coverage.availableEnd,
+            sourceQuality="live_only" if os.environ.get("MOVETHEFLOW_DISABLE_LIVE") == "1" else "partial_backfill",
+            source="exchange_klines_plus_live_buffer" if candles else "live_buffer",
         ),
         depth=depth,
     )
 
 
-def build_profile(trades: list[NormalizedTrade], price_step: float) -> list[ProfileRow]:
+async def load_time_candle_history(timeframe_sec: int, limit: int) -> list[TimeCandle]:
+    if os.environ.get("MOVETHEFLOW_DISABLE_LIVE") == "1":
+        return []
+    interval = {
+        60: "1m",
+        120: "2m",
+        300: "5m",
+        900: "15m",
+        3600: "1h",
+    }.get(timeframe_sec, "1m")
+    try:
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            response = await client.get(
+                "https://fapi.binance.com/fapi/v1/klines",
+                params={"symbol": "BTCUSDT", "interval": interval, "limit": min(limit, 1000)},
+            )
+            response.raise_for_status()
+            rows = response.json()
+    except Exception:
+        return []
+    candles: list[TimeCandle] = []
+    for row in rows:
+        open_time = int(row[0])
+        close_time = int(row[6])
+        candles.append(
+            TimeCandle(
+                symbol="BTCUSDT",
+                venue="binance_usdm",
+                timeframeSec=timeframe_sec,
+                openTime=open_time,
+                closeTime=close_time,
+                open=float(row[1]),
+                high=float(row[2]),
+                low=float(row[3]),
+                close=float(row[4]),
+                volume=float(row[5]),
+                notional=float(row[7]),
+                tradeCount=int(row[8]),
+                isLive=False,
+            )
+        )
+    return candles
+
+
+def build_profile(trades: list[NormalizedTrade], price_step: float, candles: list[TimeCandle] | None = None) -> list[ProfileRow]:
     rows: dict[float, ProfileRow] = {}
+    for candle in candles or []:
+        price = bucket_price(candle.close, price_step)
+        row = rows.setdefault(price, ProfileRow(price=price))
+        buy = candle.volume if candle.close >= candle.open else 0.0
+        sell = candle.volume if candle.close < candle.open else 0.0
+        row.volume += candle.volume
+        row.buyVolume += buy
+        row.sellVolume += sell
+        row.delta += buy - sell
     for trade in trades:
         price = bucket_price(trade.price, price_step)
         row = rows.setdefault(price, ProfileRow(price=price))
@@ -120,8 +183,12 @@ def build_market_order_bubbles(trades: list[NormalizedTrade], timeframe_sec: int
     return sorted(bubbles, key=lambda bubble: bubble.candleOpenTime)[-24:]
 
 
-def build_speed_tape(trades: list[NormalizedTrade]) -> list[SpeedTapeBar]:
+def build_speed_tape(trades: list[NormalizedTrade], candles: list[TimeCandle] | None = None) -> list[SpeedTapeBar]:
     rows: dict[int, tuple[float, float]] = defaultdict(lambda: (0.0, 0.0))
+    for candle in candles or []:
+        buy = candle.volume if candle.close >= candle.open else 0.0
+        sell = candle.volume if candle.close < candle.open else 0.0
+        rows[candle.openTime] = (buy, sell)
     for trade in trades[:2000]:
         bucket = (trade.tradeTime // 1000) * 1000
         buy, sell = rows[bucket]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MainChart } from "../components/MainChart";
 import { TimeAndSales } from "../components/TimeAndSales";
 import { Toolbar } from "../components/Toolbar";
@@ -91,16 +91,6 @@ export default function Page() {
   }, [live, timeframeSec]);
 
   const latestTrade = trades[0] ?? diagnostics?.latestTrade ?? null;
-  const statusCards = useMemo(
-    () => [
-      { label: "Trades", value: `${metrics?.trade_messages_normalized ?? 0}`, detail: "normalized" },
-      { label: "Candles", value: `${metrics?.candle_updates_published ?? 0}`, detail: "updates" },
-      { label: "Depth", value: diagnostics?.depthSynced ? "Synced" : "Waiting", detail: metrics?.depth_status ?? "stopped" },
-      { label: "Recorder", value: `${metrics?.recorder_queue_size ?? 0}`, detail: "queued" },
-    ],
-    [diagnostics, metrics],
-  );
-
   return (
     <main className="workspace">
       <Toolbar
@@ -136,15 +126,7 @@ export default function Page() {
         />
         <TimeAndSales trades={workspace?.trades.length ? workspace.trades.slice(0, 120) : trades} paused={!live} />
       </section>
-      <section className="statusStrip">
-        {statusCards.map((card) => (
-          <div className="statusCell" key={card.label}>
-            <span>{card.label}</span>
-            <strong>{card.value}</strong>
-            <small>{card.detail}</small>
-          </div>
-        ))}
-      </section>
+      <div className="microStatus">Trades {metrics?.trade_messages_normalized ?? 0} / Depth {metrics?.depth_status ?? "stopped"} / Recorder {metrics?.recorder_queue_size ?? 0}</div>
     </main>
   );
 }

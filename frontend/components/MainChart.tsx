@@ -23,17 +23,22 @@ export function MainChart({ candles, profile, bubbles, speedTape, vwap, mode }: 
   return (
     <section className="chartSurface">
       <div className="chartHeader">
-        <div>
-          <h2>Main Chart</h2>
-          <span>{mode} / {visible.length ? `${visible.length} live-buffer candles` : "Waiting for live candles"}</span>
-        </div>
         <div className="chartStats">
           <span>O {formatPrice(visible.at(-1)?.open)}</span>
           <span>H {formatPrice(visible.at(-1)?.high)}</span>
           <span>L {formatPrice(visible.at(-1)?.low)}</span>
           <span>C {formatPrice(visible.at(-1)?.close)}</span>
+          <span>V {formatVolume(visible.at(-1)?.volume)}</span>
+          <span>Trades {visible.at(-1)?.tradeCount ?? 0}</span>
+          <span>Delta {formatSigned(visible.at(-1)?.delta ?? 0)}</span>
           <span>VWAP {formatPrice(vwap.vwap ?? undefined)}</span>
         </div>
+        <span>{mode}</span>
+      </div>
+      <div className="indicatorStack">
+        <span>Profile</span>
+        <span>Market Orders</span>
+        <span>Delta Map</span>
       </div>
       <svg className="candles" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Live BTCUSDT candlestick chart">
         <rect x="0" y="0" width={width} height={height} rx="0" className="plotBg" />
@@ -86,6 +91,13 @@ export function MainChart({ candles, profile, bubbles, speedTape, vwap, mode }: 
         <text className="axisLabel" x={width - 92} y={height - padBottom}>
           {formatPrice(bounds.min)}
         </text>
+        <g className="timeAxis">
+          {[0, 0.2, 0.4, 0.6, 0.8, 1].map((pct) => {
+            const idx = Math.min(visible.length - 1, Math.max(0, Math.floor((visible.length - 1) * pct)));
+            const candle = visible[idx];
+            return candle ? <text key={pct} x={pct * width + 8} y={height - 10}>{new Date(candle.openTime).toLocaleDateString([], { day: "2-digit", month: "short" })}</text> : null;
+          })}
+        </g>
       </svg>
       <SpeedTape bars={speedTape} />
     </section>
@@ -155,4 +167,13 @@ function scale(value: number, min: number, max: number, padTop: number, chartHei
 function formatPrice(value: number | undefined) {
   if (value == null) return "-";
   return value.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+}
+
+function formatVolume(value: number | undefined) {
+  if (value == null) return "-";
+  return value.toLocaleString(undefined, { maximumFractionDigits: 3 });
+}
+
+function formatSigned(value: number) {
+  return value >= 0 ? value.toFixed(3) : value.toFixed(3);
 }

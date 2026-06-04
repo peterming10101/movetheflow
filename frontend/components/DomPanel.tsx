@@ -23,6 +23,17 @@ export function DomPanel({ rows, onClear, hidden, onHideToggle }: DomPanelProps)
         </div>
       </div>
       {hidden ? null : (
+        <>
+        <div className="domConfig">
+          <div><span>Spread</span><strong>0.1</strong></div>
+          <div><span>Bid</span><strong>150.51</strong></div>
+          <div><span>Ask</span><strong>1,207.9</strong></div>
+          <label>Theme <select><option>Sierra Red / £100</option></select></label>
+          <label>Group $ <input value="5" readOnly /></label>
+          <div className="columnToggles">
+            {["VP", "Bid", "Sell", "Price", "Buy", "Ask"].map((item) => <button key={item} type="button">{item}</button>)}
+          </div>
+        </div>
         <div className="domRows">
           <div className="domRow domHead">
             <span>VP / DP</span><span>Bid</span><span>Sell</span><span>Price</span><span>Buy</span><span>Ask</span>
@@ -38,6 +49,7 @@ export function DomPanel({ rows, onClear, hidden, onHideToggle }: DomPanelProps)
             </div>
           ))}
         </div>
+        </>
       )}
     </section>
   );

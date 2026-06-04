@@ -12,7 +12,8 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #07090d;
+  overflow: hidden;
+  background: #030506;
 }
 
 button {
@@ -23,19 +24,19 @@ button {
   display: flex;
   min-height: 100vh;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px;
+  gap: 0;
+  padding: 0;
 }
 
 .toolbar {
   display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto auto auto auto auto;
+  grid-template-columns: auto auto auto auto auto auto auto auto auto 1fr auto auto;
   align-items: center;
-  gap: 8px;
-  border: 1px solid #24303c;
-  border-radius: 8px;
-  background: #0b1118;
-  padding: 8px;
+  gap: 6px;
+  height: 38px;
+  border-bottom: 1px solid #1a2631;
+  background: #070c12;
+  padding: 3px 8px;
 }
 
 .instrument {
@@ -46,7 +47,7 @@ button {
 }
 
 .instrument strong {
-  font-size: 18px;
+  font-size: 13px;
   letter-spacing: 0;
 }
 
@@ -57,9 +58,8 @@ button {
 
 .segmented {
   display: grid;
-  grid-template-columns: repeat(2, 46px);
-  border: 1px solid #2d3d4d;
-  border-radius: 6px;
+  grid-template-columns: repeat(4, 46px);
+  border-radius: 3px;
   overflow: hidden;
 }
 
@@ -72,7 +72,8 @@ button {
 }
 
 .segmented button {
-  height: 34px;
+  height: 27px;
+  font-size: 12px;
 }
 
 .segmented button + button {
@@ -85,19 +86,37 @@ button {
 }
 
 .modeSelect {
-  height: 36px;
-  min-width: 104px;
+  height: 27px;
+  min-width: 96px;
   border: 1px solid #2d3d4d;
   border-radius: 6px;
   background: #101821;
   color: #c9d5df;
   padding: 0 8px;
+  font-size: 12px;
+}
+
+.modeSelect.tiny {
+  min-width: 54px;
+}
+
+.textButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 27px;
+  border: 1px solid #2d3d4d;
+  border-radius: 3px;
+  background: #0d1621;
+  color: #eef6ff;
+  padding: 0 9px;
+  font-size: 12px;
 }
 
 .iconButton {
   display: grid;
   width: 36px;
-  height: 36px;
+  height: 27px;
   place-items: center;
   border: 1px solid #2d3d4d;
   border-radius: 6px;
@@ -109,10 +128,15 @@ button {
   justify-content: center;
   gap: 6px;
   min-width: 86px;
-  height: 36px;
-  border: 1px solid #3d2a2f;
-  border-radius: 6px;
+  height: 27px;
+  border: 0;
   color: #ff9999;
+}
+
+.lastPriceTop {
+  color: #b7c5d4;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .connection.connected {
@@ -130,10 +154,11 @@ button {
 
 .marketGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(360px, 420px) minmax(230px, 270px);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) 390px 210px;
+  gap: 0;
   min-height: 0;
   flex: 1;
+  height: calc(100vh - 54px);
 }
 
 .leftStack {
@@ -148,9 +173,9 @@ button {
 .domPanel,
 .footprintPanel {
   min-height: 0;
-  border: 1px solid #24303c;
-  border-radius: 8px;
-  background: #0b1118;
+  border: 1px solid #1a2631;
+  border-radius: 0;
+  background: #050708;
 }
 
 .chartSurface {
@@ -166,7 +191,8 @@ button {
   justify-content: space-between;
   gap: 12px;
   border-bottom: 1px solid #202b36;
-  padding: 10px 12px;
+  min-height: 30px;
+  padding: 4px 6px;
 }
 
 .chartHeader h2,
@@ -188,13 +214,13 @@ button {
   flex-wrap: wrap;
   gap: 12px;
   color: #b8c6d1;
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
 
 .candles {
   width: 100%;
-  min-height: 420px;
+  min-height: 0;
   flex: 1;
   display: block;
 }
@@ -240,7 +266,7 @@ button {
 }
 
 .speedTape {
-  height: 150px;
+  height: 190px;
   border-top: 1px solid #202b36;
   background: #070b10;
   padding: 8px 12px 10px;
@@ -306,7 +332,7 @@ button {
 }
 
 .domRows {
-  height: calc(100vh - 112px);
+  height: calc(100vh - 310px);
   overflow: hidden;
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
@@ -314,10 +340,55 @@ button {
 
 .domRow {
   display: grid;
-  grid-template-columns: 70px 58px 58px 74px 58px 58px;
-  min-height: 20px;
+  grid-template-columns: 62px 56px 50px 72px 50px 54px;
+  min-height: 18px;
   align-items: center;
   border-bottom: 1px solid #14202a;
+}
+
+.domConfig {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  border-bottom: 1px solid #182532;
+  padding: 6px;
+  font-size: 10px;
+}
+
+.domConfig label,
+.domConfig div {
+  display: grid;
+  gap: 2px;
+  color: #8fa3b7;
+}
+
+.domConfig strong {
+  color: #8ec8ff;
+}
+
+.domConfig select,
+.domConfig input {
+  min-width: 0;
+  height: 20px;
+  border: 1px solid #29405a;
+  background: #050a10;
+  color: #e8f3ff;
+  font-size: 10px;
+}
+
+.columnToggles {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.columnToggles button {
+  height: 20px;
+  border: 1px solid #29405a;
+  background: #091420;
+  color: #d8ecff;
+  font-size: 10px;
 }
 
 .domHead {
@@ -425,8 +496,40 @@ button {
 
 .tapeRows {
   overflow: hidden;
-  max-height: calc(100vh - 112px);
+  max-height: calc(100vh - 240px);
   font-variant-numeric: tabular-nums;
+}
+
+.tapeControls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  border-bottom: 1px solid #182532;
+  padding: 5px;
+  color: #8fa3b7;
+  font-size: 10px;
+}
+
+.tapeControls label {
+  display: grid;
+  gap: 2px;
+}
+
+.tapeControls input {
+  width: 100%;
+  height: 20px;
+  border: 1px solid #29405a;
+  background: #050a10;
+  color: #e8f3ff;
+  font-size: 10px;
+}
+
+.tapeControls button,
+.tapeHeader button {
+  border: 1px solid #29405a;
+  background: #091420;
+  color: #d8ecff;
+  font-size: 10px;
 }
 
 .footprintPanel {
@@ -469,13 +572,13 @@ button {
 
 .tapeRow {
   display: grid;
-  grid-template-columns: 76px minmax(92px, 1fr) 70px;
+  grid-template-columns: minmax(88px, 1fr) 74px;
   gap: 8px;
   align-items: center;
-  min-height: 26px;
+  min-height: 18px;
   border-bottom: 1px solid #141d27;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .tapeColumnHead {
@@ -491,26 +594,36 @@ button {
   color: #f25f6c;
 }
 
-.statusStrip {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+.microStatus {
+  height: 16px;
+  border-top: 1px solid #1a2631;
+  background: #050708;
+  color: #8193a6;
+  font-size: 10px;
+  padding-left: 6px;
 }
 
-.statusCell {
+.indicatorStack {
+  position: absolute;
+  z-index: 2;
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 8px;
-  border: 1px solid #24303c;
-  border-radius: 8px;
-  background: #0b1118;
-  padding: 8px 10px;
+  gap: 12px;
+  padding: 56px 0 0 8px;
+  color: #758698;
+  font-size: 11px;
 }
 
-.statusCell strong {
-  justify-self: end;
-  font-variant-numeric: tabular-nums;
+.indicatorStack span {
+  display: block;
+  width: 148px;
+  border-left: 1px solid #284158;
+  padding: 5px 8px;
+  background: rgba(5, 8, 11, 0.7);
+}
+
+.timeAxis text {
+  fill: #7c8d9e;
+  font-size: 12px;
 }
 
 @media (max-width: 900px) {
